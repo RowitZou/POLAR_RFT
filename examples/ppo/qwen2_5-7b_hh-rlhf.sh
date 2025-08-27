@@ -12,14 +12,12 @@ policy_model_name=Qwen2.5-7B-Instruct
 reward_model_name=POLAR-7B
 
 # Model paths
-# actor_path=Qwen/Qwen2.5-7B-Instruct
-# critic_path=Qwen/Qwen2.5-7B-Instruct
-actor_path=/cpfs01/shared/alillm_hs/zouyicheng/rm_pretrain/all_models/Qwen2.5-7B-Instruct
-critic_path=/cpfs01/shared/alillm_hs/zouyicheng/rm_pretrain/all_models/Qwen2.5-7B-Instruct
+actor_path=Qwen/Qwen2.5-7B-Instruct
+critic_path=Qwen/Qwen2.5-7B-Instruct
 
 # Data paths
-train_data_path=/cpfs01/shared/alillm_hs/zouyicheng/POLAR_RFT/data/full_hh_rlhf/train.parquet
-test_data_path=/cpfs01/shared/alillm_hs/zouyicheng/POLAR_RFT/data/full_hh_rlhf/train.parquet # no use
+train_data_path=$HOME/data/full_hh_rlhf/train.parquet
+test_data_path=$HOME/data/full_hh_rlhf/train.parquet # no use
 
 # Reward Configuration
 reward_func_path="../src/polar/reward_func.py"
@@ -30,14 +28,6 @@ output_dir="../outputs/${name}"
 
 # Create output directory if it doesn't exist
 mkdir -p $output_dir
-
-# Set proxy for external access (wandb, huggingface, etc.)
-export http_proxy=https://zouyicheng:MWudisnHHWUnSTSdZxb5NQMbOalMyYOCXhAUd7ESdSaA7xBXetN1FuRfiWpF@aliyun-proxy.pjlab.org.cn:13128/
-export https_proxy=https://zouyicheng:MWudisnHHWUnSTSdZxb5NQMbOalMyYOCXhAUd7ESdSaA7xBXetN1FuRfiWpF@aliyun-proxy.pjlab.org.cn:13128/
-export HTTP_PROXY=https://zouyicheng:MWudisnHHWUnSTSdZxb5NQMbOalMyYOCXhAUd7ESdSaA7xBXetN1FuRfiWpF@aliyun-proxy.pjlab.org.cn:13128/
-export HTTPS_PROXY=https://zouyicheng:MWudisnHHWUnSTSdZxb5NQMbOalMyYOCXhAUd7ESdSaA7xBXetN1FuRfiWpF@aliyun-proxy.pjlab.org.cn:13128/
-
-export WANDB_API_KEY=c89518a9cc46b986f6f2ad122a952229a76d1445
 
 # Set wandb to offline mode to prevent online sync
 # export WANDB_MODE=offline
