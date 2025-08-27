@@ -3,21 +3,23 @@
 set -x
 
 # Parameters from original script
-nodes=4
-train_batch_size=1024
+nodes=1
+train_batch_size=512
 actor_lr=1e-6
 critic_lr=1e-5  # 10 times the actor learning rate
-data_name=Mixed-1252K
+data_name=HH-RLHF
 policy_model_name=Qwen2.5-7B-Instruct
 reward_model_name=POLAR-7B
 
 # Model paths
-actor_path=Qwen/Qwen2.5-7B-Instruct
-critic_path=Qwen/Qwen2.5-7B-Instruct
+# actor_path=Qwen/Qwen2.5-7B-Instruct
+# critic_path=Qwen/Qwen2.5-7B-Instruct
+actor_path=/cpfs01/shared/alillm_hs/zouyicheng/rm_pretrain/all_models/Qwen2.5-7B-Instruct
+critic_path=/cpfs01/shared/alillm_hs/zouyicheng/rm_pretrain/all_models/Qwen2.5-7B-Instruct
 
 # Data paths
-train_data_path=/your/path/to/data_train.parquet
-test_data_path=/your/path/to/data_test.parquet
+train_data_path=/cpfs01/shared/alillm_hs/zouyicheng/POLAR_RFT/data/full_hh_rlhf/train.parquet
+test_data_path=/cpfs01/shared/alillm_hs/zouyicheng/POLAR_RFT/data/full_hh_rlhf/train.parquet # no use
 
 # Reward Configuration
 reward_func_path="../src/polar/reward_func.py"
@@ -29,8 +31,16 @@ output_dir="../outputs/${name}"
 # Create output directory if it doesn't exist
 mkdir -p $output_dir
 
+# Set proxy for external access (wandb, huggingface, etc.)
+export http_proxy=https://zouyicheng:MWudisnHHWUnSTSdZxb5NQMbOalMyYOCXhAUd7ESdSaA7xBXetN1FuRfiWpF@aliyun-proxy.pjlab.org.cn:13128/
+export https_proxy=https://zouyicheng:MWudisnHHWUnSTSdZxb5NQMbOalMyYOCXhAUd7ESdSaA7xBXetN1FuRfiWpF@aliyun-proxy.pjlab.org.cn:13128/
+export HTTP_PROXY=https://zouyicheng:MWudisnHHWUnSTSdZxb5NQMbOalMyYOCXhAUd7ESdSaA7xBXetN1FuRfiWpF@aliyun-proxy.pjlab.org.cn:13128/
+export HTTPS_PROXY=https://zouyicheng:MWudisnHHWUnSTSdZxb5NQMbOalMyYOCXhAUd7ESdSaA7xBXetN1FuRfiWpF@aliyun-proxy.pjlab.org.cn:13128/
+
+export WANDB_API_KEY=c89518a9cc46b986f6f2ad122a952229a76d1445
+
 # Set wandb to offline mode to prevent online sync
-export WANDB_MODE=offline
+# export WANDB_MODE=offline
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:False
 
 TARGET_FILE="$output_dir/addr_${name}.txt"
@@ -62,8 +72,8 @@ if [ "$RANK" -eq 0 ]; then
     data.train_files="$train_data_path" \
     data.val_files="$test_data_path" \
     data.train_batch_size=$train_batch_size \
-    data.max_prompt_length=4096 \
-    data.max_response_length=4096 \
+    data.max_prompt_length=128 \
+    data.max_response_length=512 \
     data.filter_overlong_prompts=True \
     data.truncation='error' \
     data.prompt_key='prompt' \
@@ -76,7 +86,7 @@ if [ "$RANK" -eq 0 ]; then
     actor_rollout_ref.actor.optim.lr=$actor_lr \
     actor_rollout_ref.actor.optim.lr_warmup_steps_ratio=0.03 \
     actor_rollout_ref.actor.ppo_mini_batch_size=$train_batch_size \
-    actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=1 \
+    actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=2 \
     actor_rollout_ref.actor.clip_ratio=0.2 \
     actor_rollout_ref.actor.use_kl_loss=False \
     \
@@ -96,7 +106,7 @@ if [ "$RANK" -eq 0 ]; then
     critic.optim.warmup_style=cosine \
     critic.optim.min_lr_ratio=0.1 \
     critic.use_dynamic_bsz=False \
-    critic.ppo_micro_batch_size_per_gpu=1 \
+    critic.ppo_micro_batch_size_per_gpu=2 \
     \
     reward_model.enable=False \
     reward_model.reward_manager=batch \
@@ -107,11 +117,11 @@ if [ "$RANK" -eq 0 ]; then
     trainer.nnodes=$nodes \
     trainer.critic_warmup=0 \
     trainer.logger='["console","wandb"]' \
-    trainer.project_name='verl_training' \
+    trainer.project_name='verl_ppo_hh-rlhf' \
     trainer.val_before_train=False \
     trainer.experiment_name="$name" \
     trainer.save_freq=100 \
-    trainer.total_epochs=1 \
+    trainer.total_epochs=5 \
     trainer.default_local_dir=$output_dir \
     \
     trainer.rollout_data_dir="${output_dir}/trajectory_data/rollout" \
