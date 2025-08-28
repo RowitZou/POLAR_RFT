@@ -15,6 +15,7 @@
 from typing import List, Union
 from time import sleep
 import requests
+import re
 from transformers import AutoTokenizer
 
 # Config reward model server
@@ -264,6 +265,16 @@ def get_reward_client():
     return _reward_client
 
 
+def extract_thinking_content(text: str) -> tuple[str, str]:
+    pattern = r'<think>(.*?)</think>(.*)'
+    match = re.search(pattern, text, re.DOTALL)
+    if match:
+        thinking_content = match.group(1).strip()
+        remaining_content = match.group(2).strip()
+        return thinking_content, remaining_content
+    return "", text
+
+
 def compute_score_batch(data_sources, solution_strs, ground_truths, extra_infos, prompt_key="prompt"):
     """Compute scores for a batch of data using the POLAR reward model for VERL.
 
@@ -278,12 +289,17 @@ def compute_score_batch(data_sources, solution_strs, ground_truths, extra_infos,
         scores: A list of computed scores for each data source.
     """
 
-    client = get_reward_client()
+    legacy_eval = False
 
     batch_data = []
     for data_source, solution_str, ground_truth, extra_info in zip(
         data_sources, solution_strs, ground_truths, extra_infos, strict=True
     ):
+
+        _, solution_str = extract_thinking_content(solution_str)
+
+        if extra_info["ability"] == "math" and extra_info["split"] == "test":
+            legacy_eval = True
 
         data = {
             "prompt": extra_info[prompt_key],
@@ -293,51 +309,19 @@ def compute_score_batch(data_sources, solution_strs, ground_truths, extra_infos,
         }
         batch_data.append(data)
 
-    scores = client(batch_data)
+    if legacy_eval:
+        # If the task is math, use rule-based rewards as test evaluation.
+        from verl.utils.reward_score.math_verify import compute_score
 
-    return scores
-
-
-def reward_func(queries, prompts, labels, extra_infos=None, prompt_key="prompt", mean=0.0, std=10.0):
-    """Compute scores for a batch of data using the POLAR reward model for OpenRLHF.
-
-    Args:
-        queries: List of query strings, composed of prompts + responses.
-        prompts: List of prompt strings.
-        labels: List of solution strings.
-        extra_infos: List of extra information dictionaries containing prompt_key,
-            which is the dictionary-style input prompt for policy model and POLAR.
-        mean: Mean for reward normalization.
-        std: Standard deviation for reward normalization.
-
-    Returns:
-        rewards: A tensor containing the normalized rewards for each query.
-        scores: A tensor containing the raw scores for dynamic filtering (0-1 reward).
-        extra_logs: A dictionary containing any additional logging information.
-    """
-    import torch
+        # For enhanced accuracy, we utilize Math-Verify (https://github.com/huggingface/Math-Verify).
+        # Note: Math-Verify needs to be manually installed via pip: `pip install math-verify`.
+        return [
+            compute_score(item["output"], item["reference"])
+            for item in batch_data
+        ]
 
     client = get_reward_client()
 
-    batch_data = []
-    for query, prompt, label, extra_info in zip(queries, prompts, labels, extra_infos, strict=True):
-        data = {
-            "prompt": extra_info[prompt_key],
-            "reference": label,
-            "output": query[len(prompt):],
-            "wrapper": "sft",
-        }
-        batch_data.append(data)
-
     scores = client(batch_data)
 
-    scores = torch.tensor(scores)
-
-    # Normalize rewards
-    rewards = (scores - mean) / std
-
-    return {
-        "rewards": rewards,
-        "scores": torch.ones_like(rewards),
-        "extra_logs": {"dummy_scores": scores},
-    }
+    return scores

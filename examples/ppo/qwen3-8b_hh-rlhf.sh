@@ -3,17 +3,17 @@
 set -x
 
 # Parameters from original script
-nodes=1
+nodes=2
 train_batch_size=512
 actor_lr=1e-6
 critic_lr=1e-5
 data_name=HH-RLHF
-policy_model_name=Qwen2.5-7B-Instruct
+policy_model_name=Qwen3-8B-Instruct
 reward_model_name=POLAR-7B
 
 # Model paths
-actor_path=Qwen/Qwen2.5-7B-Instruct
-critic_path=Qwen/Qwen2.5-7B-Instruct
+actor_path=Qwen/Qwen3-8B
+critic_path=Qwen/Qwen3-8B
 
 # Data paths
 train_data_path=$HOME/data/full_hh_rlhf/train.parquet
@@ -63,7 +63,7 @@ if [ "$RANK" -eq 0 ]; then
     data.val_files="$test_data_path" \
     data.train_batch_size=$train_batch_size \
     data.max_prompt_length=128 \
-    data.max_response_length=512 \
+    data.max_response_length=16000 \
     data.filter_overlong_prompts=True \
     data.truncation='error' \
     data.prompt_key='prompt' \
@@ -76,7 +76,7 @@ if [ "$RANK" -eq 0 ]; then
     actor_rollout_ref.actor.optim.lr=$actor_lr \
     actor_rollout_ref.actor.optim.lr_warmup_steps_ratio=0.03 \
     actor_rollout_ref.actor.ppo_mini_batch_size=$train_batch_size \
-    actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=2 \
+    actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=1 \
     actor_rollout_ref.actor.clip_ratio=0.2 \
     actor_rollout_ref.actor.use_kl_loss=False \
     \
@@ -84,7 +84,8 @@ if [ "$RANK" -eq 0 ]; then
     actor_rollout_ref.rollout.n=1 \
     actor_rollout_ref.rollout.name=vllm \
     actor_rollout_ref.rollout.gpu_memory_utilization=0.7 \
-    actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=32 \
+    actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=16 \
+    actor_rollout_ref.rollout.max_num_batched_tokens=16384 \
     \
     critic.model.path="$critic_path" \
     critic.model.enable_gradient_checkpointing=True \
@@ -96,7 +97,7 @@ if [ "$RANK" -eq 0 ]; then
     critic.optim.warmup_style=cosine \
     critic.optim.min_lr_ratio=0.1 \
     critic.use_dynamic_bsz=False \
-    critic.ppo_micro_batch_size_per_gpu=2 \
+    critic.ppo_micro_batch_size_per_gpu=1 \
     \
     reward_model.enable=False \
     reward_model.reward_manager=batch \

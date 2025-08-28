@@ -72,7 +72,8 @@ critic_lr=1e-5            # Critic learning rate
 ### 5. Run Training
 
 ```bash
-bash examples/ppo/qwen2_5-7b_hh-rlhf.sh
+cd verl
+bash ../examples/ppo/qwen2_5-7b_hh-rlhf.sh
 ```
 
 ## Data Format

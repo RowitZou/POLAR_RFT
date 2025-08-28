@@ -1,5 +1,5 @@
 #!/bin/bash
-# Verl PPO training script for Qwen2.5-7B
+# Verl PPO training script for llama3.1-8B
 set -x
 
 # Parameters from original script
@@ -8,12 +8,12 @@ train_batch_size=512
 actor_lr=1e-6
 critic_lr=1e-5
 data_name=HH-RLHF
-policy_model_name=Qwen2.5-7B-Instruct
+policy_model_name=LLaMa3.1-8B-Instruct
 reward_model_name=POLAR-7B
 
 # Model paths
-actor_path=Qwen/Qwen2.5-7B-Instruct
-critic_path=Qwen/Qwen2.5-7B-Instruct
+actor_path=meta-llama/Llama-3.1-8B-Instruct
+critic_path=meta-llama/Llama-3.1-8B-Instruct
 
 # Data paths
 train_data_path=$HOME/data/full_hh_rlhf/train.parquet

@@ -53,6 +53,7 @@ def generate_dataset(local_dir="~/data/full_hh_rlhf"):
                 "extra_info": {
                     "split": split,
                     "index": idx,
+                    "ability": "alignment",
                     "prompt": dialogs[:-1],
                 },
             }
