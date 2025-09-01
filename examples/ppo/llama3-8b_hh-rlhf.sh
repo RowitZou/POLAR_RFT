@@ -115,7 +115,6 @@ if [ "$RANK" -eq 0 ]; then
     trainer.default_local_dir=$output_dir \
     \
     trainer.rollout_data_dir="${output_dir}/trajectory_data/rollout" \
-    trainer.validation_data_dir="${output_dir}/trajectory_data/validation" \
     $@
 
 else 

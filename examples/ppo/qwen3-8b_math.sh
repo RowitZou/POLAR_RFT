@@ -3,11 +3,11 @@
 set -x
 
 # Parameters from original script
-nodes=2
-train_batch_size=512
+nodes=4
+train_batch_size=1024
 actor_lr=1e-6
 critic_lr=1e-5
-data_name=HH-RLHF
+data_name=MATH
 policy_model_name=Qwen3-8B-Instruct
 reward_model_name=POLAR-7B
 
@@ -16,8 +16,8 @@ actor_path=Qwen/Qwen3-8B
 critic_path=Qwen/Qwen3-8B
 
 # Data paths
-train_data_path=$HOME/data/full_hh_rlhf/train.parquet
-test_data_path=$HOME/data/full_hh_rlhf/train.parquet # no use
+train_data_path=$HOME/data/math/train.parquet
+test_data_path=$HOME/data/math/test.parquet
 
 # Reward Configuration
 reward_func_path="../src/polar/reward_func.py"
@@ -62,8 +62,8 @@ if [ "$RANK" -eq 0 ]; then
     data.train_files="$train_data_path" \
     data.val_files="$test_data_path" \
     data.train_batch_size=$train_batch_size \
-    data.max_prompt_length=128 \
-    data.max_response_length=16000 \
+    data.max_prompt_length=1024 \
+    data.max_response_length=15000 \
     data.filter_overlong_prompts=True \
     data.truncation='error' \
     data.prompt_key='prompt' \
@@ -108,11 +108,12 @@ if [ "$RANK" -eq 0 ]; then
     trainer.nnodes=$nodes \
     trainer.critic_warmup=0 \
     trainer.logger='["console","wandb"]' \
-    trainer.project_name='verl_ppo_hh-rlhf' \
-    trainer.val_before_train=False \
+    trainer.project_name='verl_ppo_math' \
+    trainer.val_before_train=True \
     trainer.experiment_name="$name" \
     trainer.save_freq=100 \
-    trainer.total_epochs=5 \
+    trainer.test_freq=5 \
+    trainer.total_epochs=100 \
     trainer.default_local_dir=$output_dir \
     \
     trainer.rollout_data_dir="${output_dir}/trajectory_data/rollout" \

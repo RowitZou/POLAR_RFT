@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Preprocess the MATH-lighteval dataset to parquet format
-Ground truths in both train and test splits are extracted from \\boxed{}
+Preprocess the MATH-lighteval dataset to parquet format.
+Ground truths in the train split are kept as raw trajectories.
+Ground truths in the test split are extracted from \\boxed{}
 """
 
 import argparse
@@ -69,7 +70,7 @@ def extract_solution(solution_str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--local_dir", default="~/data/math_ans")
+    parser.add_argument("--local_dir", default="~/data/math")
 
     args = parser.parse_args()
 
@@ -94,7 +95,10 @@ if __name__ == "__main__":
             question = question + " " + instruction_following
 
             answer = example.pop("solution")
-            solution = extract_solution(answer)
+            if split == "train":
+                solution = answer
+            else:
+                solution = extract_solution(answer)
 
             data = {
                 "data_source": data_source,
