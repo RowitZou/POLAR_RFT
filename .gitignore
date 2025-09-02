@@ -208,3 +208,6 @@ __marimo__/
 
 # outputs
 outputs/
+
+# vscode
+.vscode/
