@@ -21,11 +21,15 @@ Please refer to the [VERL official installation guide](https://github.com/volcen
 
 **Important Version Requirements:**
 
-For the inference backend, we recommend using:
+For training Qwen2.5 and LLaMa3.1 series, we recommend using the inference backend as follows:
 - **vLLM 0.8.3**
 - **Transformers 4.50.3**
 
-⚠️ **Note**: We have found that higher versions of transformers can cause training instability. Please ensure you use transformers 4.50.3 for optimal performance.
+⚠️ **Note**: We have found that higher versions of transformers can cause training instability of Qwen2.5 series. Please ensure you use transformers 4.50.3 for optimal performance for Qwen2.5.
+
+For training Qwen3 series, we recommend using the inference backend as:
+- **vLLM 0.8.3**
+- **Transformers 4.51.3**
 
 ### 2. POLAR Reward Model Deployment
 
